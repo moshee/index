@@ -1,0 +1,39 @@
+{{ define "index" }}
+{{ with $.Data }}
+<table>
+  {{ with .Components }}
+  <ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
+  {{ end }}
+  <thead>
+    <tr>
+      <th{{ if eq .SortCol "n" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+        <a href="{{ $.Path }}?s=n{{ if eq .SortCol "n" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Name</a>
+      </th>
+      <th{{ if eq .SortCol "s" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+        <a href="{{ $.Path }}?s=s{{ if eq .SortCol "s" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Size</a>
+      </th>
+      <th{{ if eq .SortCol "m" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+        <a href="{{ $.Path }}?s=m{{ if eq .SortCol "m" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Modified</a>
+      </th>
+      <th>Mode</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Entries }}
+    <tr class="{{ if .IsDir }}d{{ else }}f{{ end }}{{ if .IsLink}} l{{ end }}">
+      <td class="n"><a href="{{ .Path }}">{{ .Name }}</a></td>
+      <td class="s">{{ if .IsDir }}({{ .NumEntries }} {{ if eq .NumEntries 1 }}file{{ else }}files{{ end }}){{ else }}{{ .Size }}{{ end }}</td>
+      <td class="m">{{ .Mod.Format "2006-01-02 15:04" }}</td>
+      <td class="p">{{ .FileMode }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+<aside id="total">{{ with $l := len .Entries }}{{ $l }} file{{ if ne $l 1 }}s{{ end }}{{ end }}</aside>
+{{ with .Readme }}
+<article>
+  {{ markdown . }}
+</article>
+{{ end }}
+{{ end }}
+{{ end }}

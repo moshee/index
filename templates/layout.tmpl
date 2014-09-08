@@ -1,0 +1,14 @@
+{{ define "layout" }}<!doctype html>
+<html>
+  <head>
+    <title>{{ $.Path }}</title>
+    <base href="//{{ .G.Host }}{{ $.Path }}/">
+    <link rel="stylesheet" href="/static/i.css">
+  </head>
+  <body>
+    <section id="main">
+      {{ content }}
+    </section>
+  </body>
+</html>
+{{ end }}

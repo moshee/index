@@ -1,0 +1,182 @@
+@charset "utf-8";
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: clear sans, helvetica, meiryo, sans-serif;
+}
+
+a {
+	color: #a42;
+	text-decoration: none;
+}
+a:hover {
+	color: #e86;
+}
+
+th {
+	text-align: left;
+	background: #fafafa;
+	padding: 8px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	border-bottom: 1px solid #ccc;
+}
+td {
+	padding: 4px 8px;
+}
+tbody {
+	font-size: 15px;
+}
+tbody tr:nth-of-type(2n) {
+	background: #fafafa;
+}
+#total {
+	padding: 4px 8px;
+	color: #888;
+	margin-bottom: 64px;
+	font-size: 15px;
+}
+
+#main {
+	width: 100%;
+	max-width: 1024px;
+	padding: 64px;
+	margin: 0 auto 64px;
+}
+
+.sort::after {
+	content: "▲";
+	font-size: 12px;
+}
+.sort.rev::after {
+	content: "▼";
+}
+.d .n a::after {
+	content: "/";
+}
+.d .s {
+	color: #888;
+}
+.s, .m, .p {
+	width: 1%;
+	white-space: nowrap;
+}
+.p {
+	font-family: menlo, dejavu sans mono, monaco, consolas, monospace;
+}
+
+.crumbs {
+	margin: 32px 0;
+	list-style-type: none;
+}
+
+.crumbs li {
+	display: inline;
+}
+
+.crumbs a {
+	display: inline-block;
+	height: 32px;
+	line-height: 32px;
+	padding: 0 8px;
+	margin-right: 4px;
+	background: #fafafa;
+}
+
+.n a {
+	/*margin-left: -28px;*/
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-left: 22px;
+	height: 16px;
+	line-height: 15px;
+	display: inline-block;
+	background: url('/static/icons16x.png') 0 -16px no-repeat;
+	position: relative;
+}
+.d .n a { background-position: 0 0 }
+.f a[href$=".mp3"],	.f a[href$=".m4a"],	.f a[href$=".flac"],
+.f a[href$=".wav"], .f a[href$=".aac"]
+{background-position:0 -32px}
+.f a[href$=".mkv"],	.f a[href$=".m4v"],	.f a[href$=".mov"]
+{background-position:0 -48px}
+.f a[href$=".txt"],	.f a[href$=".rb"],	.f a[href$=".py"],
+.f a[href$=".pl"],	.f a[href$=".c"],	.f a[href$=".h"],
+.f a[href$=".go"],	.f a[href$=".tmpl"],.f a[href$=".md"],
+.f a[href$=".html"],.f a[href$=".css"],	.f a[href$=".js"],
+.f a[href$="readme"],.f a[href$="makefile"],.f a[href$=".erb"],
+.f a[href$=".ini"],	.f a[href$=".conf"], .f a[href$=".cc"],
+.f a[href$=".cpp"],	.f a[href$=".sql"], .f a[href$=".sh"]
+{background-position:0 -64px}
+.f a[href$=".jpg"],	.f a[href$=".png"],	.f a[href$=".jpeg"],
+.f a[href$=".gif"],	.f a[href$=".tiff"],.f a[href$=".bmp"],
+.f a[href$=".psd"],	.f a[href$=".ico"]
+{background-position:0 -80px}
+.f a[href$=".torrent"]
+{background-position:0 -96px}
+.f a[href$=".zip"],	.f a[href$=".tar"],	.f a[href$=".gz"],
+.f a[href$=".tbz"],	.f a[href$=".tgz"],	.f a[href$=".xz"],
+.f a[href$=".bz2"],	.f a[href$=".rar"],	.f a[href$=".7z"],
+.f a[href$=".lzma"],.f a[href$=".hqx"],	.f a[href$=".lzh"]
+{background-position:0 -112px}
+.l .n a:before {
+	background: url('/static/icons16x.png') 0 -144px no-repeat;
+	width: 16px;
+	height: 16px;
+	display: block;
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+article h1, article h2, article h3, article h4 {
+	margin: 1em 0 .5em;
+}
+article h1 {
+	font-size: 32px;
+}
+article h2 {
+	font-size: 26px;
+	font-weight: 400;
+}
+article h3 {
+	font-size: 20px;
+}
+article h4 {
+	font-size: 16px;
+}
+article p, article ol, article ul, article li {
+	line-height: 1.5;
+	margin-bottom: .5em;
+}
+article ul, article ol {
+	padding-left: 1em;
+}
+article ul {
+	list-style-type: square;
+}
+article pre {
+	background: #f8f8f8;
+	font-family: menlo, dejavu sans mono, monaco, consolas, monospace;
+	padding: 16px;
+	margin-bottom: .5em;
+}
+article code {
+	background: #f8f8f8;
+	padding: 2px 4px;
+	tab-size: 4;
+}
+article pre code {
+	padding: 0;
+	white-space: pre-wrap;
+}
