@@ -18,24 +18,24 @@ a:hover {
 	color: #e86;
 }
 
-th {
+table#files th {
 	text-align: left;
 	background: #fafafa;
 	padding: 8px;
 }
 
-table {
+table#files {
 	width: 100%;
 	border-collapse: collapse;
 	border-bottom: 1px solid #ccc;
 }
-td {
+table#files td {
 	padding: 4px 8px;
 }
-tbody {
+table#files tbody {
 	font-size: 15px;
 }
-tbody tr:nth-of-type(2n) {
+table#files tbody tr:nth-of-type(2n) {
 	background: #fafafa;
 }
 #total {
@@ -88,7 +88,13 @@ tbody tr:nth-of-type(2n) {
 	line-height: 32px;
 	padding: 0 8px;
 	margin-right: 4px;
-	background: #fafafa;
+	background: #f0f0f0;
+}
+.crumbs a:hover {
+	background: #f8f8f8;
+}
+.crumbs li:last-of-type {
+	font-weight: 700;
 }
 
 .n a {
@@ -179,4 +185,21 @@ article code {
 article pre code {
 	padding: 0;
 	white-space: pre-wrap;
+}
+article table {
+	border-collapse: collapse;
+	border-top: 2px solid #ccc;
+}
+article table th, article table td {
+	text-align: left;
+	padding: 8px 16px;
+}
+article table th {
+	border-bottom: 2px solid #ccc;
+}
+article table td {
+	border-bottom: 1px solid #ccc;
+}
+article table tr:last-of-type td {
+	border-bottom: 2px solid #ccc;
 }

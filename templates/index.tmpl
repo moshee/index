@@ -1,6 +1,6 @@
 {{ define "index" }}
 {{ with $.Data }}
-<table>
+<table id="files">
   {{ with .Components }}
   <ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
   {{ end }}
@@ -22,7 +22,7 @@
     {{ range .Entries }}
     <tr class="{{ if .IsDir }}d{{ else }}f{{ end }}{{ if .IsLink}} l{{ end }}">
       <td class="n"><a href="{{ .Path }}">{{ .Name }}</a></td>
-      <td class="s">{{ if .IsDir }}({{ .NumEntries }} {{ if eq .NumEntries 1 }}file{{ else }}files{{ end }}){{ else }}{{ .Size }}{{ end }}</td>
+      <td class="s">{{ if .IsDir }}{{ .NumEntries }} {{ if eq .NumEntries 1 }}file{{ else }}files{{ end }}{{ else }}{{ .Size }}{{ end }}</td>
       <td class="m">{{ .Mod.Format "2006-01-02 15:04" }}</td>
       <td class="p">{{ .FileMode }}</td>
     </tr>

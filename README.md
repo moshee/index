@@ -14,6 +14,6 @@ $ open http://localhost:8888
 
 ### Environment
 
-    Name | Default | Description
-    -----|---------|-------------
-    INDEX_ROOT | "." | The root directory from which to start serving file listings.
+Name | Default | Description
+-----|---------|-------------
+INDEX_ROOT | "." | The root directory from which to start serving file listings.
