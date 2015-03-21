@@ -39,6 +39,9 @@ type ctx struct {
 }
 
 func getIndex(g *gas.Gas) (int, gas.Outputter) {
+	if g.URL.Path != "/" && strings.HasSuffix(g.URL.Path, "/") {
+		return 303, out.Redirect(strings.TrimSuffix(g.URL.Path, "/"))
+	}
 	p := filepath.Join(Conf.Root, g.URL.Path)
 	c := &ctx{
 		Path: g.URL.Path,
