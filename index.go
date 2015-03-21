@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"ktkr.us/pkg/fmtutil"
 	"ktkr.us/pkg/gas"
 	"ktkr.us/pkg/gas/out"
 )
@@ -88,7 +89,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 				Name: fi.Name(),
 				Path: filepath.Join(g.URL.Path, fi.Name()),
 			},
-			Size:     Bytes(fi.Size()),
+			Size:     fmtutil.SI(fi.Size()),
 			IsDir:    fi.IsDir(),
 			IsLink:   fi.Mode()&os.ModeSymlink != 0,
 			Mod:      fi.ModTime(),
@@ -164,7 +165,7 @@ a:
 
 type FileEntry struct {
 	Component
-	Size       Bytes
+	Size       fmtutil.SI
 	IsDir      bool
 	IsLink     bool
 	Mod        time.Time
@@ -202,51 +203,6 @@ func (l byModTime) Less(i, j int) bool {
 type Component struct {
 	Name string
 	Path string
-}
-
-type Bytes uint64
-
-const (
-	KB = 1024 << (10 * iota)
-	MB
-	GB
-	TB
-	PB
-)
-
-func (b Bytes) String() string {
-	n := 0.0
-	s := ""
-	switch {
-	case b < 0:
-		return ""
-	case b < KB:
-		return strconv.FormatUint(uint64(b), 10)
-	case b < MB:
-		s = "k"
-		n = float64(b) / KB
-	case b < GB:
-		s = "M"
-		n = float64(b) / MB
-	case b < TB:
-		s = "G"
-		n = float64(b) / GB
-	case b < PB:
-		s = "T"
-		n = float64(b) / TB
-	default:
-		s = "P"
-		n = float64(b) / PB
-	}
-
-	return strconv.FormatFloat(round(n, 1), 'f', -1, 64) + s
-}
-
-// round to prec digits
-func round(n float64, prec int) float64 {
-	n *= float64(prec) * 10
-	x := float64(int64(n + 0.5))
-	return x / (float64(prec) * 10)
 }
 
 var readmePatterns = []string{
