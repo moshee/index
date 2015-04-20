@@ -58,6 +58,17 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
+	base := strings.ToLower(filepath.Base(g.URL.Path))
+	if base == "index.html" || base == "index.htm" {
+		f, err := os.Open(p)
+		if err != nil {
+			c.Data = err
+			return 500, out.HTML("500", c, "layout")
+		}
+		http.ServeContent(g, g.Request, base, fi.ModTime(), f)
+		return g.Stop()
+	}
+
 	if !fi.IsDir() {
 		http.ServeFile(g, g.Request, p)
 		return g.Stop()
@@ -65,6 +76,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 
 	fis, err := ioutil.ReadDir(p)
 	if err != nil {
+		c.Data = err
 		return 500, out.HTML("500", c, "layout")
 	}
 
@@ -76,6 +88,16 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			continue
 		}
 		path := filepath.Join(p, fi.Name())
+
+		isLink := fi.Mode()&os.ModeSymlink != 0
+		if isLink {
+			fi, err = os.Stat(path)
+			if err != nil {
+				c.Data = err
+				return 500, out.HTML("500", c, "layout")
+			}
+		}
+
 		if isReadme(fi) {
 			f, err := os.Open(path)
 			if err != nil {
@@ -87,6 +109,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 				}
 			}
 		}
+
 		e := &FileEntry{
 			Component: Component{
 				Name: fi.Name(),
@@ -94,7 +117,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			},
 			Size:     fmtutil.SI(fi.Size()),
 			IsDir:    fi.IsDir(),
-			IsLink:   fi.Mode()&os.ModeSymlink != 0,
+			IsLink:   isLink,
 			Mod:      fi.ModTime(),
 			FileMode: fi.Mode(),
 		}
