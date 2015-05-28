@@ -1,9 +1,10 @@
 {{ define "index" }}
 {{ with $.Data }}
+{{ with .Components }}
+<ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
+{{ end }}
+{{ if .Entries }}
 <table id="files">
-  {{ with .Components }}
-  <ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
-  {{ end }}
   <thead>
     <tr>
       <th{{ if eq .SortCol "n" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
@@ -29,11 +30,36 @@
     {{ end }}
   </tbody>
 </table>
-<aside id="total">{{ with $l := len .Entries }}{{ $l }} file{{ if ne $l 1 }}s{{ end }}{{ end }}</aside>
+{{ end }}
+{{ if .Gallery }}
+<section class="gallery">
+  {{ template "nav" $ }}
+  <section class="gallery-items">
+    {{ range .ImageFiles }}
+    <figure>
+      <a href="{{ .Path }}"><img src="{{ .Path }}" alt="{{ .Name }}"></a>
+      <figcaption>{{ .Name }} <span class="s">({{ .Size }})</span></figcaption>
+    </figure>
+    {{ end }}
+  </section>
+  {{ template "nav" $ }}
+</section>
+{{ end }}
+<aside id="total">{{ with $l := .NumEntries }}{{ $l }} file{{ if ne $l 1 }}s{{ end }}{{ end }}</aside>
 {{ with .Readme }}
 <article>
   {{ markdown . }}
 </article>
 {{ end }}
+{{ end }}
+{{ end }}
+
+{{ define "nav" }}
+{{ with .Data }}
+  <nav class="gallery-pagination">
+    {{ if gt .GalleryPage 1 }}<a href="{{ $.Path }}?p={{ .PrevPage }}">←</a>{{ else }}<span style="visibility: hidden">←</span>{{ end }}
+    {{ .GalleryPage }} &#xff0f; {{ .GalleryPages }}
+    {{ if lt .GalleryPage .GalleryPages }}<a href="{{ $.Path }}?p={{ .NextPage }}">→</a>{{ else }}<span style="visibility: hidden">→</span>{{ end }}
+  </nav>
 {{ end }}
 {{ end }}

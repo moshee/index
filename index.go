@@ -3,11 +3,11 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +17,8 @@ import (
 )
 
 var Conf struct {
-	Root string `default:"."`
+	Root          string `default:"."`
+	GalleryImages int    `default:"25"`
 }
 
 func main() {
@@ -81,7 +82,11 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	}
 
 	entries := make([]*FileEntry, 0, len(fis))
-	var readme []byte
+	var (
+		readme        []byte
+		imageFiles    []*FileEntry
+		nonImageFiles []*FileEntry
+	)
 
 	for _, fi := range fis {
 		if strings.HasPrefix(fi.Name(), ".") {
@@ -137,14 +142,28 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			}
 		}
 		entries = append(entries, e)
+		if isImage(fi.Name()) {
+			imageFiles = append(imageFiles, e)
+		} else {
+			nonImageFiles = append(nonImageFiles, e)
+		}
 	}
 
-	sortCol := g.FormValue("s")
-	sortRev := false
-	if sortCol != "" {
-		var sorter sort.Interface
+	var form struct {
+		SortCol     string `form:"s"`
+		SortRev     bool   `form:"r"`
+		GalleryPage int    `form:"p"`
+	}
 
-		switch sortCol {
+	log.Print(g.UnmarshalForm(&form))
+
+	log.Print(form)
+
+	if form.SortCol != "" {
+		var sorter sort.Interface
+		s := true
+
+		switch form.SortCol {
 		case "n":
 			sorter = byName(entries)
 		case "s":
@@ -152,18 +171,17 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		case "m":
 			sorter = byModTime(entries)
 		default:
-			goto a
+			s = false
 		}
 
-		sortRev, err = strconv.ParseBool(g.FormValue("r"))
-		if sortRev {
-			sorter = sort.Reverse(sorter)
-		}
+		if s {
+			if form.SortRev {
+				sorter = sort.Reverse(sorter)
+			}
 
-		sort.Stable(sorter)
+			sort.Stable(sorter)
+		}
 	}
-
-a:
 
 	path := strings.TrimPrefix(g.URL.Path, "/")
 	var components []Component
@@ -178,13 +196,53 @@ a:
 		}
 	}
 
+	numEntries := len(entries)
+	showGallery := len(imageFiles) > len(entries)/2
+	var galleryPages int
+	if showGallery {
+		entries = nonImageFiles
+		galleryPages = int(math.Ceil(float64(len(imageFiles)) / float64(Conf.GalleryImages)))
+
+		if form.GalleryPage < 1 {
+			form.GalleryPage = 1
+		}
+		off := (form.GalleryPage - 1) * Conf.GalleryImages
+		if off < len(imageFiles) {
+			if len(imageFiles)-off < Conf.GalleryImages {
+				imageFiles = imageFiles[off:]
+			} else {
+				imageFiles = imageFiles[off : off+Conf.GalleryImages]
+			}
+		}
+	}
+
 	c.Data = &struct {
-		Components []Component
-		Entries    []*FileEntry
-		Readme     []byte
-		SortCol    string
-		SortRev    bool
-	}{components, entries, readme, sortCol, sortRev}
+		Components   []Component
+		Entries      []*FileEntry
+		ImageFiles   []*FileEntry
+		Readme       []byte
+		SortCol      string
+		SortRev      bool
+		Gallery      bool
+		GalleryPage  int
+		NextPage     int
+		PrevPage     int
+		GalleryPages int
+		NumEntries   int
+	}{
+		components,
+		entries,
+		imageFiles,
+		readme,
+		form.SortCol,
+		form.SortRev,
+		showGallery,
+		form.GalleryPage,
+		form.GalleryPage + 1,
+		form.GalleryPage - 1,
+		galleryPages,
+		numEntries,
+	}
 
 	return 200, out.HTML("index", c, "layout")
 }
@@ -243,6 +301,28 @@ func isReadme(fi os.FileInfo) bool {
 	name := strings.ToLower(fi.Name())
 	for _, p := range readmePatterns {
 		if name == p {
+			return true
+		}
+	}
+	return false
+}
+
+var imageExtensions = []string{
+	".jpg",
+	".jpeg",
+	".png",
+	".gif",
+	".webp",
+	".tif",
+	".tiff",
+	".bmp",
+	".svg",
+}
+
+func isImage(name string) bool {
+	ext := strings.ToLower(filepath.Ext(name))
+	for _, e := range imageExtensions {
+		if e == ext {
 			return true
 		}
 	}

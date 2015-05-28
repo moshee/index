@@ -22,6 +22,8 @@ table#files th {
 	text-align: left;
 	background: #fafafa;
 	padding: 8px;
+	text-transform: uppercase;
+	font-size: 14px;
 }
 
 table#files {
@@ -202,4 +204,51 @@ article table td {
 }
 article table tr:last-of-type td {
 	border-bottom: 2px solid #ccc;
+}
+
+.gallery {
+	margin-top: 64px;
+}
+
+.gallery-items {
+	margin-top: 32px;
+	display: -webkit-flex;
+	-webkit-justify-content: space-between;
+	-webkit-flex-wrap: wrap;
+	-webkit-align-items: flex-start;
+	-webkit-align-content: flex-start;
+
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	align-content: flex-start;
+}
+
+.gallery figure {
+	width: 150px;
+	height: 140px;
+	margin: auto;
+	flex-grow: 1;
+	-webkit-flex-grow: 1;
+	text-align: center;
+}
+.gallery figure img {
+	max-width: 100%;
+	height: auto;
+	max-height: 100px;
+}
+.gallery figure figcaption {
+	font-size: 10px;
+	color: #444;
+}
+figcaption span.s {
+	color: #888;
+}
+nav.gallery-pagination {
+	width: 120px;
+	text-align: center;
+	margin: 0 auto;
+	padding: 4px 8px;
+	background: #f0f0f0;
 }
