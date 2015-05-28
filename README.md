@@ -17,3 +17,4 @@ $ open http://localhost:8888
 Name | Default | Description
 -----|---------|-------------
 INDEX_ROOT | "." | The root directory from which to start serving file listings.
+INDEX_GALLERY_IMAGES | 25 | The maximum number of images per gallery page.
