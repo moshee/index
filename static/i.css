@@ -121,13 +121,14 @@ table#files tbody tr:nth-of-type(2n) {
 .f a[href$=".pl"],	.f a[href$=".c"],	.f a[href$=".h"],
 .f a[href$=".go"],	.f a[href$=".tmpl"],.f a[href$=".md"],
 .f a[href$=".html"],.f a[href$=".css"],	.f a[href$=".js"],
-.f a[href$="readme"],.f a[href$="makefile"],.f a[href$=".erb"],
+.f a[href$="README"],.f a[href$="Makefile"],.f a[href$=".erb"],
 .f a[href$=".ini"],	.f a[href$=".conf"], .f a[href$=".cc"],
 .f a[href$=".cpp"],	.f a[href$=".sql"], .f a[href$=".sh"]
 {background-position:0 -64px}
 .f a[href$=".jpg"],	.f a[href$=".png"],	.f a[href$=".jpeg"],
 .f a[href$=".gif"],	.f a[href$=".tiff"],.f a[href$=".bmp"],
-.f a[href$=".psd"],	.f a[href$=".ico"]
+.f a[href$=".psd"],	.f a[href$=".ico"], .f a[href$=".svg"],
+.f a[href$=".pgm"], .f a[href$=".pdf"]
 {background-position:0 -80px}
 .f a[href$=".torrent"]
 {background-position:0 -96px}
