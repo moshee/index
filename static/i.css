@@ -18,18 +18,25 @@ a:hover {
 	color: #e86;
 }
 
-table#files th {
+table {
+	border-collapse: collapse;
+}
+table th {
 	text-align: left;
-	background: #fafafa;
-	padding: 8px;
+	background: #f8f8f8;
+	border-bottom: 3px solid #eee;
 	text-transform: uppercase;
 	font-size: 14px;
+}
+table th, table tr:nth-of-type(2n) td {
+	background: #f8f8f8;
 }
 
 table#files {
 	width: 100%;
-	border-collapse: collapse;
-	border-bottom: 1px solid #ccc;
+}
+table#files th {
+	padding: 8px;
 }
 table#files td {
 	padding: 4px 8px;
@@ -37,9 +44,7 @@ table#files td {
 table#files tbody {
 	font-size: 15px;
 }
-table#files tbody tr:nth-of-type(2n) {
-	background: #fafafa;
-}
+
 #total {
 	padding: 4px 8px;
 	color: #888;
@@ -197,17 +202,8 @@ article table {
 	border-collapse: collapse;
 	margin-bottom: .5em;
 }
-article table th {
-	border-bottom: 3px solid #eee;
-	text-transform: uppercase;
-	font-size: 14px;
-}
 article table th, article table td {
-	text-align: left;
 	padding: 8px 16px;
-}
-article table th, article table tr:nth-of-type(2n) td {
-	background: #f8f8f8;
 }
 
 .gallery {
