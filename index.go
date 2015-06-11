@@ -84,6 +84,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	entries := make([]*FileEntry, 0, len(fis))
 	var (
 		readme        []byte
+		readmeKind    int
 		imageFiles    []*FileEntry
 		nonImageFiles []*FileEntry
 	)
@@ -103,14 +104,17 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			}
 		}
 
-		if isReadme(fi) {
-			f, err := os.Open(path)
-			if err != nil {
-				readme = []byte(err.Error())
-			} else {
-				readme, err = ioutil.ReadAll(f)
+		// only pick first one encountered
+		if readmeKind == notReadme {
+			if readmeKind = determineReadmeKind(fi); readmeKind != notReadme {
+				f, err := os.Open(path)
 				if err != nil {
 					readme = []byte(err.Error())
+				} else {
+					readme, err = ioutil.ReadAll(f)
+					if err != nil {
+						readme = []byte(err.Error())
+					}
 				}
 			}
 		}
@@ -221,6 +225,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		Entries      []*FileEntry
 		ImageFiles   []*FileEntry
 		Readme       []byte
+		PlainReadme  bool
 		SortCol      string
 		SortRev      bool
 		Gallery      bool
@@ -234,6 +239,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		entries,
 		imageFiles,
 		readme,
+		readmeKind == plainReadme,
 		form.SortCol,
 		form.SortRev,
 		showGallery,
@@ -290,21 +296,29 @@ type Component struct {
 }
 
 var readmePatterns = []string{
-	"readme",
 	"readme.md",
 	"readme.mkd",
 	"readme.mkdown",
 	"readme.markdown",
 }
 
-func isReadme(fi os.FileInfo) bool {
+const (
+	notReadme = iota
+	plainReadme
+	markdownReadme
+)
+
+func determineReadmeKind(fi os.FileInfo) int {
 	name := strings.ToLower(fi.Name())
+	if name == "readme" {
+		return plainReadme
+	}
 	for _, p := range readmePatterns {
 		if name == p {
-			return true
+			return markdownReadme
 		}
 	}
-	return false
+	return notReadme
 }
 
 var imageExtensions = []string{

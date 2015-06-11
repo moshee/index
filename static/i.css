@@ -178,15 +178,19 @@ article pre {
 	font-family: menlo, dejavu sans mono, monaco, consolas, monospace;
 	padding: 16px;
 	margin-bottom: .5em;
+	overflow-x: auto;
+}
+article pre code {
+	padding: 0;
+}
+article pre.readme {
+	font-size: 14px;
+	white-space: pre-wrap;
 }
 article code {
 	background: #f8f8f8;
 	padding: 2px 4px;
 	tab-size: 4;
-}
-article pre code {
-	padding: 0;
-	white-space: pre-wrap;
 }
 article table {
 	border-collapse: collapse;

@@ -46,9 +46,13 @@
 </section>
 {{ end }}
 <aside id="total">{{ with $l := .NumEntries }}{{ $l }} file{{ if ne $l 1 }}s{{ end }}{{ end }}</aside>
-{{ with .Readme }}
+{{ if .Readme }}
 <article>
-  {{ markdown . }}
+  {{ if .PlainReadme }}
+  <pre class="readme">{{ string .Readme }}</pre>
+  {{ else }}
+  {{ markdown .Readme }}
+  {{ end }}
 </article>
 {{ end }}
 {{ end }}
