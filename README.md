@@ -29,5 +29,7 @@ server {
 
 Name | Default | Description
 -----|---------|-------------
-INDEX_ROOT | "." | The root directory from which to start serving file listings.
+INDEX_ROOT | `"."` | The root directory from which to start serving file listings.
+INDEX_THUMB_DIR | `"~/.thumbs"` | The directory to cache thumbnails in if `INDEX_THUMB_ENABLE=1`.
+INDEX_THUMB_ENABLE | true | Enable generating and caching thumbnails of gallery images.
 INDEX_GALLERY_IMAGES | 25 | The maximum number of images per gallery page.

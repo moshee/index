@@ -37,7 +37,7 @@
   <section class="gallery-items">
     {{ range .ImageFiles }}
     <figure>
-      <a href="{{ .Path }}"><img src="{{ .Path }}" alt="{{ .Name }}"></a>
+      <a href="{{ .Path }}"><img src="{{ .Path }}?t=1" alt="{{ .Name }}"></a>
       <figcaption>{{ .Name }} <span class="s">({{ .Size }})</span></figcaption>
     </figure>
     {{ end }}

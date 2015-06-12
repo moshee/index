@@ -1,31 +1,65 @@
 package main
 
 import (
+	"image/jpeg"
 	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"golang.org/x/image/draw"
+
+	"ktkr.us/pkg/airlift/thumb"
 	"ktkr.us/pkg/fmtutil"
 	"ktkr.us/pkg/gas"
 	"ktkr.us/pkg/gas/out"
 )
 
+const (
+	thumbWidth  = 150
+	thumbHeight = 100
+)
+
 var Conf struct {
 	Root          string `default:"."`
-	GalleryImages int    `default:"25"`
+	ThumbDir      string
+	ThumbEnable   bool `default:"true"`
+	GalleryImages int  `default:"25"`
 }
+
+type FSStore struct{}
+
+func (FSStore) Get(id string) string { return id }
+
+var cache *thumb.Cache
 
 func main() {
 	err := gas.EnvConf(&Conf, "INDEX_")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	u, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if Conf.ThumbDir == "" {
+		Conf.ThumbDir = filepath.Join(u.HomeDir, ".thumbs")
+	}
+
+	enc := thumb.JPEGEncoder{&jpeg.Options{90}}
+	cache, err = thumb.NewCache(Conf.ThumbDir, enc, FSStore{}, thumbWidth, thumbHeight, draw.ApproxBiLinear)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go cache.Serve()
 
 	r := gas.New()
 	r.StaticHandler()
@@ -70,7 +104,24 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		return g.Stop()
 	}
 
+	var form struct {
+		SortCol     string `form:"s"`
+		SortRev     bool   `form:"r"`
+		GalleryPage int    `form:"p"`
+		Thumb       bool   `form:"t"`
+	}
+
+	g.UnmarshalForm(&form)
+
 	if !fi.IsDir() {
+		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(p)) {
+			thumbPath := cache.Get(p)
+			// serve original image if we can't thumbnail
+			if thumbPath != "" {
+				http.ServeFile(g, g.Request, thumbPath)
+				return g.Stop()
+			}
+		}
 		http.ServeFile(g, g.Request, p)
 		return g.Stop()
 	}
@@ -146,22 +197,12 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			}
 		}
 		entries = append(entries, e)
-		if isImage(fi.Name()) {
+		if thumb.FormatSupported(filepath.Ext(fi.Name())) {
 			imageFiles = append(imageFiles, e)
 		} else {
 			nonImageFiles = append(nonImageFiles, e)
 		}
 	}
-
-	var form struct {
-		SortCol     string `form:"s"`
-		SortRev     bool   `form:"r"`
-		GalleryPage int    `form:"p"`
-	}
-
-	log.Print(g.UnmarshalForm(&form))
-
-	log.Print(form)
 
 	if form.SortCol != "" {
 		var sorter sort.Interface
@@ -319,26 +360,4 @@ func determineReadmeKind(fi os.FileInfo) int {
 		}
 	}
 	return notReadme
-}
-
-var imageExtensions = []string{
-	".jpg",
-	".jpeg",
-	".png",
-	".gif",
-	".webp",
-	".tif",
-	".tiff",
-	".bmp",
-	".svg",
-}
-
-func isImage(name string) bool {
-	ext := strings.ToLower(filepath.Ext(name))
-	for _, e := range imageExtensions {
-		if e == ext {
-			return true
-		}
-	}
-	return false
 }
