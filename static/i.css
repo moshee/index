@@ -120,7 +120,8 @@ table#files tbody {
 .f a[href$=".mp3"],	.f a[href$=".m4a"],	.f a[href$=".flac"],
 .f a[href$=".wav"], .f a[href$=".aac"]
 {background-position:0 -32px}
-.f a[href$=".mkv"],	.f a[href$=".m4v"],	.f a[href$=".mov"]
+.f a[href$=".mkv"],	.f a[href$=".m4v"],	.f a[href$=".mov"],
+.f a[href$=".avi"]
 {background-position:0 -48px}
 .f a[href$=".txt"],	.f a[href$=".rb"],	.f a[href$=".py"],
 .f a[href$=".pl"],	.f a[href$=".c"],	.f a[href$=".h"],
@@ -128,7 +129,8 @@ table#files tbody {
 .f a[href$=".html"],.f a[href$=".css"],	.f a[href$=".js"],
 .f a[href$="README"],.f a[href$="Makefile"],.f a[href$=".erb"],
 .f a[href$=".ini"],	.f a[href$=".conf"], .f a[href$=".cc"],
-.f a[href$=".cpp"],	.f a[href$=".sql"], .f a[href$=".sh"]
+.f a[href$=".cpp"],	.f a[href$=".sql"], .f a[href$=".sh"],
+.f a[href$=".nfo"]
 {background-position:0 -64px}
 .f a[href$=".jpg"],	.f a[href$=".png"],	.f a[href$=".jpeg"],
 .f a[href$=".gif"],	.f a[href$=".tiff"],.f a[href$=".bmp"],
