@@ -3,34 +3,37 @@
 {{ with .Components }}
 <ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
 {{ end }}
-{{ if .Entries }}
 <table id="files">
   <thead>
     <tr>
-      <th{{ if eq .SortCol "n" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+      <th class="n{{ if eq .SortCol "n" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
         <a href="{{ $.Path }}?s=n{{ if eq .SortCol "n" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Name</a>
       </th>
-      <th{{ if eq .SortCol "s" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+      <th class="s{{ if eq .SortCol "s" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
         <a href="{{ $.Path }}?s=s{{ if eq .SortCol "s" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Size</a>
       </th>
-      <th{{ if eq .SortCol "m" }} class="sort{{ if .SortRev }} rev{{ end }}"{{ end }}>
+      <th class="m{{ if eq .SortCol "m" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
         <a href="{{ $.Path }}?s=m{{ if eq .SortCol "m" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Modified</a>
       </th>
-      <th>Mode</th>
+      <th class="p">Mode</th>
     </tr>
   </thead>
   <tbody>
+    {{ if len $.Data.Components | lt 1 }}
+    <tr class="up">
+      <td class="n"><a href="..">..</a></td>
+    </tr>
+    {{ end }}
     {{ range .Entries }}
-    <tr class="{{ if .IsDir }}d{{ else }}f{{ end }}{{ if .IsLink}} l{{ end }}">
-      <td class="n"><a href="{{ .Path }}">{{ .Name }}</a></td>
+    <tr class="{{ if .IsDir }}d{{ else }}f{{ end }}{{ if .IsLink }} l{{ end }}">
+      <td class="n"><div><a href="{{ .Path }}">{{ .Name }}</a></div></td>
       <td class="s">{{ if .IsDir }}{{ .NumEntries }} {{ if eq .NumEntries 1 }}file{{ else }}files{{ end }}{{ else }}{{ .Size }}{{ end }}</td>
-      <td class="m">{{ .Mod.Format "2006-01-02 15:04" }}</td>
+      <td class="m"><time>{{ .Mod.Format "2006-01-02 15:04" }}</time></td>
       <td class="p">{{ .FileMode }}</td>
     </tr>
     {{ end }}
   </tbody>
 </table>
-{{ end }}
 {{ if .Gallery }}
 <section class="gallery">
   {{ template "nav" $ }}
@@ -40,12 +43,12 @@
       <a href="{{ .Path }}"><img src="{{ .Path }}?t=1" alt="{{ .Name }}"></a>
       <figcaption>{{ .Name }} <span class="s">({{ .Size }})</span></figcaption>
     </figure>
-    {{ end }}
+    {{ end }}{{/* range .ImageFiles */}}
   </section>
   {{ template "nav" $ }}
 </section>
-{{ end }}
-<aside id="total">{{ with $l := .NumEntries }}{{ $l }} file{{ if ne $l 1 }}s{{ end }}{{ end }}</aside>
+{{ end }}{{/* if .Gallery */}}
+<aside id="total">{{ .NumEntries }} file{{ if ne .NumEntries 1 }}s{{ end }}</aside>
 {{ if .Readme }}
 <article>
   {{ if .PlainReadme }}

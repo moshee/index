@@ -76,7 +76,7 @@ table#files tbody {
 	width: 1%;
 	white-space: nowrap;
 }
-.p {
+td.p {
 	font-family: menlo, dejavu sans mono, monaco, consolas, monospace;
 }
 
@@ -94,7 +94,7 @@ table#files tbody {
 	height: 32px;
 	line-height: 32px;
 	padding: 0 8px;
-	margin-right: 4px;
+	margin: 0 4px 4px 0;
 	background: #f0f0f0;
 }
 .crumbs a:hover {
@@ -104,19 +104,26 @@ table#files tbody {
 	font-weight: 700;
 }
 
-.n a {
-	/*margin-left: -28px;*/
+td.n > div {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+td.n a, .l .n a:before {
+	background-image: url('/static/icons.png');
+	background-size: 16px 160px;
+	background-repeat: no-repeat;
+}
+td.n a {
+	background-position: 0 -16px;
 	padding-left: 22px;
 	height: 16px;
 	line-height: 15px;
 	display: inline-block;
-	background: url('/static/icons16x.png') 0 -16px no-repeat;
 	position: relative;
 }
-.d .n a { background-position: 0 0 }
+.d  td.n a { background-position: 0 0 }
+.up td.n a { background-position: 0 -128px }
 .f a[href$=".mp3"],	.f a[href$=".m4a"],	.f a[href$=".flac"],
 .f a[href$=".wav"], .f a[href$=".aac"]
 {background-position:0 -32px}
@@ -128,14 +135,14 @@ table#files tbody {
 .f a[href$=".go"],	.f a[href$=".tmpl"],.f a[href$=".md"],
 .f a[href$=".html"],.f a[href$=".css"],	.f a[href$=".js"],
 .f a[href$="README"],.f a[href$="Makefile"],.f a[href$=".erb"],
-.f a[href$=".ini"],	.f a[href$=".conf"], .f a[href$=".cc"],
+.f a[href$=".ini"],	.f a[href$=".conf"],.f a[href$=".cc"],
 .f a[href$=".cpp"],	.f a[href$=".sql"], .f a[href$=".sh"],
 .f a[href$=".nfo"]
 {background-position:0 -64px}
 .f a[href$=".jpg"],	.f a[href$=".png"],	.f a[href$=".jpeg"],
 .f a[href$=".gif"],	.f a[href$=".tiff"],.f a[href$=".bmp"],
 .f a[href$=".psd"],	.f a[href$=".ico"], .f a[href$=".svg"],
-.f a[href$=".pgm"], .f a[href$=".pdf"]
+.f a[href$=".pgm"], .f a[href$=".pbm"], .f a[href$=".pdf"]
 {background-position:0 -80px}
 .f a[href$=".torrent"]
 {background-position:0 -96px}
@@ -144,8 +151,9 @@ table#files tbody {
 .f a[href$=".bz2"],	.f a[href$=".rar"],	.f a[href$=".7z"],
 .f a[href$=".lzma"],.f a[href$=".hqx"],	.f a[href$=".lzh"]
 {background-position:0 -112px}
-.l .n a:before {
-	background: url('/static/icons16x.png') 0 -144px no-repeat;
+
+.l .n a:before { /* symlinks */
+	background-position: 0 -144px no-repeat;
 	width: 16px;
 	height: 16px;
 	display: block;
@@ -253,4 +261,40 @@ nav.gallery-pagination {
 	margin: 0 auto;
 	padding: 4px 8px;
 	background: #f0f0f0;
+}
+
+.empty {
+	color: #888;
+	font-style: italic;
+	text-align: center;
+}
+
+@media screen and (max-width: 860px) {
+	.p {
+		display: none;
+	}
+	#main {
+		padding: 32px;
+	}
+}
+
+@media screen and (max-width: 767px) {
+	#main {
+		padding: 16px 0 32px;
+	}
+	.n {
+		width: 1%;
+	}
+	.crumbs {
+		margin: 8px;
+	}
+}
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2), /* safari */
+only screen and (min-device-pixel-ratio: 2), /* old version */
+only screen and (min-resolution: 192dpi), /* IE 9..11 and opera mini */
+only screen and (min-resolution: 2dppx) {  /* compliant */
+	td.n a, .l .n a:before {
+		background-image: url('/static/icons@2x.png');
+	}
 }
