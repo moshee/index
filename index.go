@@ -27,15 +27,12 @@ const (
 )
 
 var Conf struct {
-	Root          string `default:"."`
-	ThumbDir      string
-	ThumbEnable   bool `default:"true"`
-	GalleryImages int  `default:"25"`
+	Root            string `default:"."`
+	ThumbDir        string
+	ThumbEnable     bool `default:"true"`
+	GalleryImages   int  `default:"25"`
+	ZipFolderEnable bool `default:"false"`
 }
-
-type FSStore struct{}
-
-func (FSStore) Get(id string) string { return id }
 
 var cache *thumb.Cache
 
@@ -55,7 +52,7 @@ func main() {
 	}
 
 	enc := thumb.JPEGEncoder{&jpeg.Options{90}}
-	cache, err = thumb.NewCache(Conf.ThumbDir, enc, FSStore{}, thumbWidth, thumbHeight, draw.ApproxBiLinear)
+	cache, err = thumb.NewCache(Conf.ThumbDir, enc, FSStore{}, draw.ApproxBiLinear)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,6 +68,16 @@ type ctx struct {
 	Path string
 	G    *gas.Gas
 	Data interface{}
+}
+
+type FileEntry struct {
+	Component
+	Size       fmtutil.SI
+	IsDir      bool
+	IsLink     bool
+	Mod        time.Time
+	NumEntries int
+	FileMode   os.FileMode
 }
 
 func getIndex(g *gas.Gas) (int, gas.Outputter) {
@@ -115,7 +122,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 
 	if !fi.IsDir() {
 		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(p)) {
-			thumbPath := cache.Get(p)
+			thumbPath := cache.Get(p, thumbWidth, thumbHeight)
 			// serve original image if we can't thumbnail
 			if thumbPath != "" {
 				http.ServeFile(g, g.Request, thumbPath)
@@ -292,72 +299,4 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	}
 
 	return 200, out.HTML("index", c, "layout")
-}
-
-type FileEntry struct {
-	Component
-	Size       fmtutil.SI
-	IsDir      bool
-	IsLink     bool
-	Mod        time.Time
-	NumEntries int
-	FileMode   os.FileMode
-}
-
-type byName []*FileEntry
-
-func (l byName) Len() int      { return len(l) }
-func (l byName) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
-
-func (l byName) Less(i, j int) bool {
-	return l[i].Name < l[j].Name
-}
-
-type bySize []*FileEntry
-
-func (l bySize) Len() int      { return len(l) }
-func (l bySize) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
-
-func (l bySize) Less(i, j int) bool {
-	return l[i].Size < l[j].Size
-}
-
-type byModTime []*FileEntry
-
-func (l byModTime) Len() int      { return len(l) }
-func (l byModTime) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
-
-func (l byModTime) Less(i, j int) bool {
-	return l[i].Mod.Before(l[j].Mod)
-}
-
-type Component struct {
-	Name string
-	Path string
-}
-
-var readmePatterns = []string{
-	"readme.md",
-	"readme.mkd",
-	"readme.mkdown",
-	"readme.markdown",
-}
-
-const (
-	notReadme = iota
-	plainReadme
-	markdownReadme
-)
-
-func determineReadmeKind(fi os.FileInfo) int {
-	name := strings.ToLower(fi.Name())
-	if name == "readme" {
-		return plainReadme
-	}
-	for _, p := range readmePatterns {
-		if name == p {
-			return markdownReadme
-		}
-	}
-	return notReadme
 }
