@@ -98,7 +98,8 @@ td.p {
 	background: #f0f0f0;
 }
 .crumbs a:hover {
-	background: #f8f8f8;
+	background: #c64;
+	color: #fff;
 }
 .crumbs li:last-of-type {
 	font-weight: 700;
@@ -153,7 +154,7 @@ td.n a {
 {background-position:0 -112px}
 
 .l .n a:before { /* symlinks */
-	background-position: 0 -144px no-repeat;
+	background-position: 0 -144px;
 	width: 16px;
 	height: 16px;
 	display: block;

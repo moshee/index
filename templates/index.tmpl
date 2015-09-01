@@ -1,7 +1,7 @@
 {{ define "index" }}
 {{ with $.Data }}
 {{ with .Components }}
-<ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul>
+<nav><ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul></nav>
 {{ end }}
 <table id="files">
   <thead>
@@ -48,7 +48,7 @@
   {{ template "nav" $ }}
 </section>
 {{ end }}{{/* if .Gallery */}}
-<aside id="total">{{ .NumEntries }} file{{ if ne .NumEntries 1 }}s{{ end }}</aside>
+<aside id="total">{{ .NumEntries }} file{{ if ne .NumEntries 1 }}s{{ end }}{{ if .Config.ZipFolderEnable }} | <a href="?zip=1">Download as zip</a> (<a href="?zip=1&rec=1">recursively</a>){{ end }}</aside>
 {{ if .Readme }}
 <article>
   {{ if .PlainReadme }}

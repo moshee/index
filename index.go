@@ -1,7 +1,9 @@
 package main
 
 import (
+	"archive/zip"
 	"image/jpeg"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -82,13 +84,29 @@ type FileEntry struct {
 
 func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	if g.URL.Path != "/" && strings.HasSuffix(g.URL.Path, "/") {
-		return 303, out.Redirect(strings.TrimSuffix(g.URL.Path, "/"))
+		newpath := strings.TrimSuffix(g.URL.Path, "/")
+		if g.URL.RawQuery != "" {
+			newpath += "?" + g.URL.RawQuery
+		}
+		return 303, out.Redirect(newpath)
 	}
-	p := filepath.Join(Conf.Root, g.URL.Path)
+
 	c := &ctx{
 		Path: g.URL.Path,
 		G:    g,
 	}
+
+	var form struct {
+		Zip         bool   `form:"zip"`
+		Recursive   bool   `form:"rec"`
+		SortCol     string `form:"s"`
+		SortRev     bool   `form:"r"`
+		GalleryPage int    `form:"p"`
+		Thumb       bool   `form:"t"`
+	}
+	g.UnmarshalForm(&form)
+
+	p := filepath.Join(Conf.Root, g.URL.Path)
 
 	fi, err := os.Stat(p)
 	if err != nil {
@@ -98,6 +116,26 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			c.Data = err
 			return 500, out.HTML("500", c, "layout")
 		}
+	}
+
+	if fi.IsDir() && form.Zip {
+		var (
+			fhs []*zip.FileHeader
+			err error
+		)
+
+		if form.Recursive {
+			fhs, err = walk(p)
+		} else {
+			fhs, err = readdirnames(p)
+		}
+
+		if err != nil {
+			c.Data = err
+			return 500, out.HTML("500", c, "layout")
+		}
+
+		return 200, &zipper{g.URL.Path, fhs}
 	}
 
 	base := strings.ToLower(filepath.Base(g.URL.Path))
@@ -110,15 +148,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		http.ServeContent(g, g.Request, base, fi.ModTime(), f)
 		return g.Stop()
 	}
-
-	var form struct {
-		SortCol     string `form:"s"`
-		SortRev     bool   `form:"r"`
-		GalleryPage int    `form:"p"`
-		Thumb       bool   `form:"t"`
-	}
-
-	g.UnmarshalForm(&form)
 
 	if !fi.IsDir() {
 		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(p)) {
@@ -282,6 +311,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		PrevPage     int
 		GalleryPages int
 		NumEntries   int
+		Config       interface{}
 	}{
 		components,
 		entries,
@@ -296,7 +326,109 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		form.GalleryPage - 1,
 		galleryPages,
 		numEntries,
+		&Conf,
 	}
 
 	return 200, out.HTML("index", c, "layout")
+}
+
+func readdirnames(root string) ([]*zip.FileHeader, error) {
+	f, err := os.Open(root)
+	if err != nil {
+		return nil, err
+	}
+
+	names, err := f.Readdirnames(0)
+	if err != nil {
+		return nil, err
+	}
+
+	fhs := make([]*zip.FileHeader, 0, len(names))
+	base := filepath.Base(root)
+	for _, name := range names {
+		path := filepath.Join(root, name)
+		fi, err := os.Stat(path)
+		if err != nil {
+			return nil, err
+		}
+		if !fi.Mode().IsRegular() {
+			continue
+		}
+		fh, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return nil, err
+		}
+		fh.Name = filepath.Join(base, name)
+		fhs = append(fhs, fh)
+	}
+
+	return fhs, nil
+}
+
+func walk(root string) ([]*zip.FileHeader, error) {
+	fhs := make([]*zip.FileHeader, 0)
+	dir := filepath.Dir(root)
+
+	err := filepath.Walk(root, func(path string, fi os.FileInfo, err error) error {
+		if !fi.Mode().IsRegular() {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		fh, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return err
+		}
+		fh.Name, _ = filepath.Rel(dir, path)
+		fhs = append(fhs, fh)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return fhs, nil
+}
+
+type zipper struct {
+	dir string
+	fhs []*zip.FileHeader
+}
+
+func (z *zipper) Output(code int, g *gas.Gas) {
+	dir := filepath.Dir(z.dir)
+
+	names := make([]string, len(z.fhs))
+	for i, fh := range z.fhs {
+		names[i] = fh.Name
+	}
+
+	g.Header().Set("Content-Type", "application/zip")
+	g.WriteHeader(code)
+
+	zw := zip.NewWriter(g)
+	defer zw.Close()
+	for _, fh := range z.fhs {
+		path := filepath.Join(Conf.Root, dir, fh.Name)
+		f, err := os.Open(path)
+		if err != nil {
+			log.Printf("zipper: %v", err)
+			continue
+		}
+		// UTF-8 filename mode (see Appendix D of ZIP spec)
+		fh.Flags |= (1 << 11)
+		fh.Method = zip.Deflate
+		w, err := zw.CreateHeader(fh)
+		if err != nil {
+			log.Printf("zipper: %v", err)
+			continue
+		}
+		_, err = io.Copy(w, f)
+		if err != nil {
+			log.Printf("zipper: %v", err)
+			break
+		}
+		f.Close()
+	}
 }
