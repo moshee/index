@@ -18,6 +18,7 @@ import (
 
 	"golang.org/x/image/draw"
 
+	"ktkr.us/pkg/airlift/contentdisposition"
 	"ktkr.us/pkg/airlift/thumb"
 	"ktkr.us/pkg/fmtutil"
 	"ktkr.us/pkg/gas"
@@ -406,6 +407,7 @@ func (z *zipper) Output(code int, g *gas.Gas) {
 	}
 
 	g.Header().Set("Content-Type", "application/zip")
+	contentdisposition.SetFilename(g, filepath.Base(z.dir)+".zip")
 	g.WriteHeader(code)
 
 	zw := zip.NewWriter(g)
