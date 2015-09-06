@@ -95,7 +95,7 @@ td.p {
 	line-height: 32px;
 	padding: 0 8px;
 	margin: 0 4px 4px 0;
-	background: #f0f0f0;
+	background: #f8f8f8;
 }
 .crumbs a:hover {
 	background: #c64;
@@ -261,7 +261,7 @@ nav.gallery-pagination {
 	text-align: center;
 	margin: 0 auto;
 	padding: 4px 8px;
-	background: #f0f0f0;
+	background: #f8f8f8;
 }
 
 .empty {
