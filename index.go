@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -209,7 +210,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		e := &FileEntry{
 			Component: Component{
 				Name: fi.Name(),
-				Path: filepath.Join(g.URL.Path, fi.Name()),
+				Path: (&url.URL{Path: filepath.Join(g.URL.Path, fi.Name())}).String(),
 			},
 			Size:     fmtutil.SI(fi.Size()),
 			IsDir:    fi.IsDir(),
