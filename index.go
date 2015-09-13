@@ -23,7 +23,11 @@ import (
 	"ktkr.us/pkg/fmtutil"
 	"ktkr.us/pkg/gas"
 	"ktkr.us/pkg/gas/out"
+	"ktkr.us/pkg/vfs"
+	"ktkr.us/pkg/vfs/bindata"
 )
+
+//go:generate bindata -skip=*.sw[nop] static templates
 
 const (
 	thumbWidth  = 150
@@ -36,6 +40,7 @@ var Conf struct {
 	ThumbEnable     bool `default:"true"`
 	GalleryImages   int  `default:"25"`
 	ZipFolderEnable bool `default:"false"`
+	ResourceDir     string
 }
 
 var cache *thumb.Cache
@@ -44,6 +49,18 @@ func main() {
 	err := gas.EnvConf(&Conf, "INDEX_")
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if Conf.ResourceDir != "" {
+		log.Print("using disk filesystem")
+		fs, err := vfs.NewNativeFS(Conf.ResourceDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		out.TemplateFS(fs)
+	} else {
+		log.Print("using binary filesystem")
+		out.TemplateFS(bindata.Root)
 	}
 
 	u, err := user.Current()
@@ -63,7 +80,7 @@ func main() {
 	go cache.Serve()
 
 	r := gas.New()
-	r.StaticHandler()
+	r.StaticHandler(Conf.ResourceDir)
 	r.Get("{path}", getIndex)
 	r.Ignition()
 }

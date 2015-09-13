@@ -1,6 +1,7 @@
 ## Index
 
-This is a directory listing web server. It's a refresh of my old httplistd project, which I made when I didn't know much about Go and stuff.
+This is a directory listing web server. It's a refresh of my old httplistd
+project, which I made when I didn't know much about Go and stuff.
 
 ### Install and run
 
@@ -12,7 +13,8 @@ $ INDEX_ROOT=~/files GAS_PORT=8888 ./index
 $ open http://localhost:8888
 ```
 
-Adding the following to your `nginx.conf` can make the indexer accessible from `files.example.com`:
+Adding the following to your `nginx.conf` can make the indexer accessible from
+`files.example.com`:
 
 ```nginx
 server {
@@ -25,6 +27,13 @@ server {
 }
 ```
 
+#### Building
+
+Requires Go 1.5.
+
+To generate support files for binary-packaged static assets, run `go generate`
+before `go build`.
+
 ### Environment
 
 Name | Default | Description
@@ -34,3 +43,4 @@ INDEX_THUMB_DIR | `"~/.thumbs"` | The directory to cache thumbnails in if `INDEX
 INDEX_THUMB_ENABLE | true | Enable generating and caching thumbnails of gallery images.
 INDEX_GALLERY_IMAGES | 25 | The maximum number of images per gallery page.
 INDEX_ZIP_FOLDER_ENABLE | false | Enable downloading directories as zip files
+INDEX_RESOURCE_DIR | `""` | Directory in which to load resources (static files and templates). Uses files packed in binary if empty.
