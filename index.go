@@ -80,7 +80,7 @@ func main() {
 	go cache.Serve()
 
 	r := gas.New()
-	r.StaticHandler(Conf.ResourceDir)
+	r.StaticHandler("/", Conf.ResourceDir)
 	r.Get("{path}", getIndex)
 	r.Ignition()
 }
