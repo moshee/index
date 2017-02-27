@@ -1,8 +1,8 @@
 {{ define "404" }}
-<h1>"{{ $.Path }}" doesn't exist</h1>
+<h1>"{{ $.G.URL.Path }}" doesn't exist</h1>
 {{ end }}
 
 {{ define "500" }}
-<h1>Failed to open "{{ $.Path }}"</h1>
+<h1>Failed to open "{{ $.G.URL.Path }}"</h1>
 <p>{{ .Data }}</p>
 {{ end }}

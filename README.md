@@ -29,18 +29,21 @@ server {
 
 #### Building
 
-Requires Go 1.5.
+Requires Go 1.7.
 
 To generate support files for binary-packaged static assets, run `go generate`
 before `go build`.
 
 ### Environment
 
-Name | Default | Description
------|---------|-------------
-INDEX_ROOT | `"."` | The root directory from which to start serving file listings.
-INDEX_THUMB_DIR | `"~/.thumbs"` | The directory to cache thumbnails in if `INDEX_THUMB_ENABLE=1`.
-INDEX_THUMB_ENABLE | true | Enable generating and caching thumbnails of gallery images.
-INDEX_GALLERY_IMAGES | 25 | The maximum number of images per gallery page.
-INDEX_ZIP_FOLDER_ENABLE | false | Enable downloading directories as zip files
-INDEX_RESOURCE_DIR | `""` | Directory in which to load resources (static files and templates). Uses files packed in binary if empty.
+Name                              | Default       | Description
+----------------------------------|---------------|--------------
+INDEX_ROOT                        | `"."`         | The root directory from which to start serving file listings.
+INDEX_THUMB_DIR                   | `"~/.thumbs"` | The directory to cache thumbnails in if `INDEX_THUMB_ENABLE=1`.
+INDEX_THUMB_ENABLE                | true          | Enable generating and caching thumbnails of gallery images.
+INDEX_GALLERY_IMAGES              | 25            | The maximum number of images per gallery page.
+INDEX_ZIP_FOLDER_ENABLE           | false         | Enable downloading all files in current directory as a zip file.
+INDEX_ZIP_FOLDER_ENABLE_RECURSIVE | false         | Enable downloading entire current tree recursively as a zip file.
+INDEX_ZIP_FOLDER_MAX_CONCURRENCY  | 0             | Limit global number of concurrent zippers. 0 applies no limit. Must be ≥0.
+INDEX_FILE_LIST_SHOW_MODES        | true          | Enable file modes (`drwxrwxrwx`) column in file list.
+INDEX_RESOURCE_DIR                | `""`          | Directory in which to load resources (static files and templates). Uses files packed in binary if empty.

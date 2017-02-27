@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +16,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"go4.org/syncutil"
 
 	"golang.org/x/image/draw"
 
@@ -35,15 +38,30 @@ const (
 )
 
 var Conf struct {
-	Root            string `default:"."`
-	ThumbDir        string
-	ThumbEnable     bool `default:"true"`
-	GalleryImages   int  `default:"25"`
-	ZipFolderEnable bool `default:"false"`
-	ResourceDir     string
+	Root                     string `default:"."`
+	ThumbDir                 string
+	ThumbEnable              bool   `default:"true"`
+	GalleryImages            int    `default:"25"`
+	ZipFolderEnable          bool   `default:"false"` // enable download directory as zip
+	ZipFolderEnableRecursive bool   `default:"false"` // enable download directory recursively as zip
+	ZipFolderMaxConcurrency  int    `default:"0"`     // absolutely limit global number of concurrent zippers
+	FileListShowModes        bool   `default:"true"`  // show file modes (i.e. drwxrwxrwx)
+	ResourceDir              string // location of static assets on disk
 }
 
-var cache *thumb.Cache
+var (
+	cache *thumb.Cache
+	gate  *syncutil.Gate
+)
+
+func init() {
+	t, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		log.Fatal("not ok")
+	}
+	t.DialContext = (&net.Dialer{Timeout: 60 * time.Second}).DialContext
+	t.IdleConnTimeout = 30 * time.Minute
+}
 
 func main() {
 	err := gas.EnvConf(&Conf, "INDEX_")
@@ -79,16 +97,12 @@ func main() {
 	}
 	go cache.Serve()
 
+	gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
+
 	r := gas.New()
 	r.StaticHandler("/", Conf.ResourceDir)
 	r.Get("{path}", getIndex)
 	r.Ignition()
-}
-
-type ctx struct {
-	Path string
-	G    *gas.Gas
-	Data interface{}
 }
 
 type FileEntry struct {
@@ -110,11 +124,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		return 303, out.Redirect(newpath)
 	}
 
-	c := &ctx{
-		Path: g.URL.Path,
-		G:    g,
-	}
-
 	var form struct {
 		Zip         bool   `form:"zip"`
 		Recursive   bool   `form:"rec"`
@@ -130,28 +139,26 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	fi, err := os.Stat(p)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return 404, out.HTML("404", c, "layout")
+			return 404, out.HTML("404", err, "layout")
 		} else {
-			c.Data = err
-			return 500, out.HTML("500", c, "layout")
+			return 500, out.HTML("500", err, "layout")
 		}
 	}
 
-	if fi.IsDir() && form.Zip {
+	if fi.IsDir() && form.Zip && Conf.ZipFolderEnable {
 		var (
 			fhs []*zip.FileHeader
 			err error
 		)
 
-		if form.Recursive {
+		if form.Recursive && Conf.ZipFolderEnableRecursive {
 			fhs, err = walk(p)
 		} else {
 			fhs, err = readdirnames(p)
 		}
 
 		if err != nil {
-			c.Data = err
-			return 500, out.HTML("500", c, "layout")
+			return 500, out.HTML("500", err, "layout")
 		}
 
 		return 200, &zipper{g.URL.Path, fhs}
@@ -161,8 +168,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	if base == "index.html" || base == "index.htm" {
 		f, err := os.Open(p)
 		if err != nil {
-			c.Data = err
-			return 500, out.HTML("500", c, "layout")
+			return 500, out.HTML("500", err, "layout")
 		}
 		http.ServeContent(g, g.Request, base, fi.ModTime(), f)
 		return g.Stop()
@@ -183,8 +189,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 
 	fis, err := ioutil.ReadDir(p)
 	if err != nil {
-		c.Data = err
-		return 500, out.HTML("500", c, "layout")
+		return 500, out.HTML("500", err, "layout")
 	}
 
 	entries := make([]*FileEntry, 0, len(fis))
@@ -205,8 +210,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		if isLink {
 			fi, err = os.Stat(path)
 			if err != nil {
-				c.Data = err
-				return 500, out.HTML("500", c, "layout")
+				return 500, out.HTML("500", err, "layout")
 			}
 		}
 
@@ -296,7 +300,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
-	numEntries := len(entries)
 	showGallery := len(imageFiles) > len(entries)/2
 	var galleryPages int
 	if showGallery {
@@ -316,7 +319,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
-	c.Data = &struct {
+	data := &struct {
 		Components   []Component
 		Entries      []*FileEntry
 		ImageFiles   []*FileEntry
@@ -329,7 +332,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		NextPage     int
 		PrevPage     int
 		GalleryPages int
-		NumEntries   int
 		Config       interface{}
 	}{
 		components,
@@ -344,11 +346,10 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		form.GalleryPage + 1,
 		form.GalleryPage - 1,
 		galleryPages,
-		numEntries,
 		&Conf,
 	}
 
-	return 200, out.HTML("index", c, "layout")
+	return 200, out.HTML("index", data, "layout")
 }
 
 func readdirnames(root string) ([]*zip.FileHeader, error) {
@@ -416,6 +417,9 @@ type zipper struct {
 }
 
 func (z *zipper) Output(code int, g *gas.Gas) {
+	gate.Start()
+	defer gate.Done()
+
 	dir := filepath.Dir(z.dir)
 
 	names := make([]string, len(z.fhs))

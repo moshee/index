@@ -1,72 +1,92 @@
 {{ define "index" }}
-{{ with $.Data }}
-{{ with .Components }}
+{{- with $.Data }}
+{{- with .Components }}
 <nav><ul class="crumbs">{{ range . }}<li><a href="{{ .Path }}">{{ .Name }}</a></li>{{ end }}</ul></nav>
-{{ end }}
+{{- end }}
 <table id="files">
   <thead>
     <tr>
       <th class="n{{ if eq .SortCol "n" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
-        <a href="{{ $.Path }}?s=n{{ if eq .SortCol "n" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Name</a>
+        <a href="{{ $.G.URL.Path }}?s=n{{ if eq .SortCol "n" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Name</a>
       </th>
       <th class="s{{ if eq .SortCol "s" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
-        <a href="{{ $.Path }}?s=s{{ if eq .SortCol "s" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Size</a>
+        <a href="{{ $.G.URL.Path }}?s=s{{ if eq .SortCol "s" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Size</a>
       </th>
       <th class="m{{ if eq .SortCol "m" }} sort{{ if .SortRev }} rev{{ end }}{{ end }}">
-        <a href="{{ $.Path }}?s=m{{ if eq .SortCol "m" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Modified</a>
+        <a href="{{ $.G.URL.Path }}?s=m{{ if eq .SortCol "m" }}{{ if not .SortRev }}&r=1{{ end }}{{ end }}">Modified</a>
       </th>
+      {{- if $.Data.Config.FileListShowModes }}
       <th class="p">Mode</th>
+      {{- end }}
     </tr>
   </thead>
   <tbody>
-    {{ if len $.Data.Components | lt 1 }}
+    {{- if len $.Data.Components | lt 1 }}
     <tr class="up">
       <td class="n"><a href="..">..</a></td>
     </tr>
-    {{ end }}
-    {{ range .Entries }}
+    {{- end }}
+    {{- range .Entries }}
     <tr class="{{ if .IsDir }}d{{ else }}f{{ end }}{{ if .IsLink }} l{{ end }}">
       <td class="n"><div><a href="{{ .Path }}">{{ .Name }}</a></div></td>
       <td class="s">{{ if .IsDir }}{{ .NumEntries }} {{ if eq .NumEntries 1 }}file{{ else }}files{{ end }}{{ else }}{{ .Size }}{{ end }}</td>
       <td class="m"><time>{{ .Mod.Format "2006-01-02 15:04" }}</time></td>
+      {{- if $.Data.Config.FileListShowModes }}
       <td class="p">{{ .FileMode }}</td>
+      {{- end }}
     </tr>
-    {{ end }}
+    {{- end }}
   </tbody>
 </table>
-{{ if .Gallery }}
+{{- if .Gallery }}
 <section class="gallery">
-  {{ template "nav" $ }}
+  {{- template "nav" $ }}
   <section class="gallery-items">
-    {{ range .ImageFiles }}
+    {{- range .ImageFiles }}
     <figure>
       <a href="{{ .Path }}"><img src="{{ .Path }}?t=1" alt="{{ .Name }}"></a>
       <figcaption>{{ .Name }} <span class="s">({{ .Size }})</span></figcaption>
     </figure>
-    {{ end }}{{/* range .ImageFiles */}}
+    {{- end }}{{/* range .ImageFiles */}}
   </section>
-  {{ template "nav" $ }}
+  {{- template "nav" $ }}
 </section>
-{{ end }}{{/* if .Gallery */}}
-<aside id="total">{{ .NumEntries }} file{{ if ne .NumEntries 1 }}s{{ end }}{{ if .Config.ZipFolderEnable }} | <a href="?zip=1">Download as zip</a> (<a href="?zip=1&rec=1">recursively</a>){{ end }}</aside>
+{{- end }}{{/* if .Gallery */}}
+<aside id="total">
+  {{ len .Entries }} file{{ if len .Entries | ne 1 }}s{{ end }}
+  {{- if $.Data.Config.ZipFolderEnable }}
+    | <a href="?zip=1">Download as zip</a>
+    {{- if $.Data.Config.ZipFolderEnableRecursive -}}
+    (<a href="?zip=1&rec=1">recursively</a>)
+    {{- end -}}
+  {{- end }}
+</aside>
 {{ if .Readme }}
 <article>
-  {{ if .PlainReadme }}
+  {{- if .PlainReadme }}
   <pre class="readme">{{ string .Readme }}</pre>
-  {{ else }}
+  {{- else }}
   {{ markdown .Readme }}
-  {{ end }}
+  {{- end }}
 </article>
-{{ end }}
-{{ end }}
+{{- end }}
+{{- end }}
 {{ end }}
 
 {{ define "nav" }}
-{{ with .Data }}
+{{- with .Data }}
   <nav class="gallery-pagination">
-    {{ if gt .GalleryPage 1 }}<a href="{{ $.Path }}?p={{ .PrevPage }}">←</a>{{ else }}<span style="visibility: hidden">←</span>{{ end }}
+    {{- if gt .GalleryPage 1 -}}
+    <a href="{{ $.G.URL.Path }}?p={{ .PrevPage }}">←</a>
+    {{- else -}}
+    <span style="visibility: hidden">←</span>
+    {{- end -}}
     {{ .GalleryPage }} &#xff0f; {{ .GalleryPages }}
-    {{ if lt .GalleryPage .GalleryPages }}<a href="{{ $.Path }}?p={{ .NextPage }}">→</a>{{ else }}<span style="visibility: hidden">→</span>{{ end }}
+    {{- if lt .GalleryPage .GalleryPages -}}
+    <a href="{{ $.G.URL.Path }}?p={{ .NextPage }}">→</a>
+    {{- else -}}
+    <span style="visibility: hidden">→</span>
+    {{- end -}}
   </nav>
 {{ end }}
 {{ end }}
