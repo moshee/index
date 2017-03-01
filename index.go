@@ -102,7 +102,7 @@ func main() {
 	r := gas.New()
 	r.StaticHandler("/", Conf.ResourceDir)
 	r.Get("{path}", getIndex)
-	r.Ignition()
+	log.Fatal(r.Ignition())
 }
 
 type FileEntry struct {
@@ -134,15 +134,21 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	}
 	g.UnmarshalForm(&form)
 
-	p := filepath.Join(Conf.Root, g.URL.Path)
-
-	fi, err := os.Stat(p)
+	dir := http.Dir(Conf.Root)
+	f, err := dir.Open(g.URL.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return 404, out.HTML("404", err, "layout")
 		} else {
 			return 500, out.HTML("500", err, "layout")
 		}
+	}
+
+	p := filepath.Join(Conf.Root, g.URL.Path)
+
+	fi, err := f.Stat()
+	if err != nil {
+		return 500, out.HTML("500", err, "layout")
 	}
 
 	if fi.IsDir() && form.Zip && Conf.ZipFolderEnable {
@@ -166,16 +172,13 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 
 	base := strings.ToLower(filepath.Base(g.URL.Path))
 	if base == "index.html" || base == "index.htm" {
-		f, err := os.Open(p)
-		if err != nil {
-			return 500, out.HTML("500", err, "layout")
-		}
 		http.ServeContent(g, g.Request, base, fi.ModTime(), f)
 		return g.Stop()
 	}
 
 	if !fi.IsDir() {
-		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(p)) {
+		// file was requested
+		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(fi.Name())) {
 			thumbPath := cache.Get(p, thumbWidth, thumbHeight)
 			// serve original image if we can't thumbnail
 			if thumbPath != "" {
@@ -183,17 +186,19 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 				return g.Stop()
 			}
 		}
-		http.ServeFile(g, g.Request, p)
+		http.ServeContent(g, g.Request, fi.Name(), fi.ModTime(), f)
 		return g.Stop()
 	}
 
-	fis, err := ioutil.ReadDir(p)
+	// directory listing requested
+
+	fis, err := f.Readdir(-1)
 	if err != nil {
 		return 500, out.HTML("500", err, "layout")
 	}
 
-	entries := make([]*FileEntry, 0, len(fis))
 	var (
+		entries       = make([]*FileEntry, 0, len(fis))
 		readme        []byte
 		readmeKind    int
 		imageFiles    []*FileEntry
@@ -204,11 +209,18 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		if strings.HasPrefix(fi.Name(), ".") {
 			continue
 		}
-		path := filepath.Join(p, fi.Name())
 
-		isLink := fi.Mode()&os.ModeSymlink != 0
+		var (
+			path   = filepath.Join(g.URL.Path, fi.Name())
+			isLink = fi.Mode()&os.ModeSymlink != 0
+		)
+
 		if isLink {
-			fi, err = os.Stat(path)
+			f, err := dir.Open(path)
+			if err != nil {
+				return 500, out.HTML("500", err, "layout")
+			}
+			fi, err = f.Stat()
 			if err != nil {
 				return 500, out.HTML("500", err, "layout")
 			}
@@ -217,7 +229,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		// only pick first one encountered
 		if readmeKind == notReadme {
 			if readmeKind = determineReadmeKind(fi); readmeKind != notReadme {
-				f, err := os.Open(path)
+				f, err := dir.Open(path)
 				if err != nil {
 					readme = []byte(err.Error())
 				} else {
@@ -240,21 +252,20 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 			Mod:      fi.ModTime(),
 			FileMode: fi.Mode(),
 		}
+
 		if fi.IsDir() {
-			dir, err := os.Open(path)
+			fis, err = f.Readdir(-1)
 			if err != nil {
 				log.Print(err)
 			} else {
-				names, _ := dir.Readdirnames(-1)
-				n := 0
-				for _, name := range names {
-					if !strings.HasPrefix(name, ".") {
-						n++
+				for _, contained := range fis {
+					if !strings.HasPrefix(contained.Name(), ".") {
+						e.NumEntries++
 					}
 				}
-				e.NumEntries = n
 			}
 		}
+
 		entries = append(entries, e)
 		if thumb.FormatSupported(filepath.Ext(fi.Name())) {
 			imageFiles = append(imageFiles, e)
@@ -287,8 +298,13 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
-	path := strings.TrimPrefix(g.URL.Path, "/")
-	var components []Component
+	var (
+		path         = strings.TrimPrefix(g.URL.Path, "/")
+		components   []Component
+		showGallery  = len(imageFiles) > len(entries)/2
+		galleryPages int
+	)
+
 	if path == "" {
 		components = []Component{{"/", "/"}}
 	} else {
@@ -300,8 +316,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
-	showGallery := len(imageFiles) > len(entries)/2
-	var galleryPages int
 	if showGallery {
 		entries = nonImageFiles
 		galleryPages = int(math.Ceil(float64(len(imageFiles)) / float64(Conf.GalleryImages)))
