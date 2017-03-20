@@ -69,17 +69,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var fs vfs.FileSystem
+
 	if Conf.ResourceDir != "" {
 		log.Print("using disk filesystem")
-		fs, err := vfs.NewNativeFS(Conf.ResourceDir)
+		nfs, err := vfs.Native(Conf.ResourceDir)
 		if err != nil {
 			log.Fatal(err)
 		}
-		out.TemplateFS(fs)
+		fs = vfs.Fallback(nfs, bindata.Root)
 	} else {
 		log.Print("using binary filesystem")
-		out.TemplateFS(bindata.Root)
+		fs = bindata.Root
 	}
+
+	out.TemplateFS(fs)
 
 	u, err := user.Current()
 	if err != nil {
@@ -100,7 +104,7 @@ func main() {
 	gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
 
 	r := gas.New()
-	r.StaticHandler("/", Conf.ResourceDir)
+	r.StaticHandler("/static", fs)
 	r.Get("{path}", getIndex)
 	log.Fatal(r.Ignition())
 }
