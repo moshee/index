@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -314,16 +315,16 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	}
 
 	var (
-		path         = strings.TrimPrefix(g.URL.Path, "/")
+		relPath      = strings.TrimPrefix(g.URL.Path, "/")
 		components   []Component
 		showGallery  = len(imageFiles) > len(entries)/2
 		galleryPages int
 	)
 
-	if path == "" {
+	if relPath == "" {
 		components = []Component{{"/", "/"}}
 	} else {
-		parts := strings.Split(path, string([]rune{filepath.Separator}))
+		parts := strings.Split(relPath, string([]rune{filepath.Separator}))
 		components = make([]Component, len(parts)+1)
 		components[0] = Component{"/", "/"}
 		for i, p := range parts {
@@ -350,6 +351,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 
 	data := &struct {
 		Components   []Component
+		UpDir        string
 		Entries      []*FileEntry
 		ImageFiles   []*FileEntry
 		Readme       []byte
@@ -364,6 +366,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		Config       interface{}
 	}{
 		components,
+		path.Dir(g.URL.Path),
 		entries,
 		imageFiles,
 		readme,

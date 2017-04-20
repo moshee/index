@@ -23,7 +23,7 @@
   <tbody>
     {{- if len $.Data.Components | lt 1 }}
     <tr class="up">
-      <td class="n"><a href="..">..</a></td>
+      <td class="n"><a href="{{ $.Data.UpDir }}">..</a></td>
     </tr>
     {{- end }}
     {{- range .Entries }}
