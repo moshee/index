@@ -218,16 +218,17 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 
 		var (
-			path   = filepath.Join(g.URL.Path, fi.Name())
-			isLink = fi.Mode()&os.ModeSymlink != 0
+			path        = filepath.Join(g.URL.Path, fi.Name())
+			isLink      = fi.Mode()&os.ModeSymlink != 0
+			currentFile http.File
 		)
 
 		if isLink {
-			f, err := dir.Open(path)
+			currentFile, err = dir.Open(path)
 			if err != nil {
 				return 500, out.HTML("500", err, "layout")
 			}
-			fi, err = f.Stat()
+			fi, err = currentFile.Stat()
 			if err != nil {
 				return 500, out.HTML("500", err, "layout")
 			}
@@ -261,7 +262,13 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 
 		if fi.IsDir() {
-			fis, err = f.Readdir(-1)
+			if currentFile == nil {
+				currentFile, err = dir.Open(path)
+				if err != nil {
+					return 500, out.HTML("500", err, "layout")
+				}
+			}
+			fis, err = currentFile.Readdir(-1)
 			if err != nil {
 				log.Print(err)
 			} else {
