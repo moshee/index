@@ -153,8 +153,6 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		}
 	}
 
-	p := filepath.Join(Conf.Root, g.URL.Path)
-
 	fi, err := f.Stat()
 	if err != nil {
 		return 500, out.HTML("500", err, "layout")
@@ -167,9 +165,9 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 		)
 
 		if form.Recursive && Conf.ZipFolderEnableRecursive {
-			fhs, err = walk(p)
+			fhs, err = walk(g.URL.Path)
 		} else {
-			fhs, err = readdirnames(p)
+			fhs, err = readdirnames(g.URL.Path)
 		}
 
 		if err != nil {
@@ -188,6 +186,7 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 	if !fi.IsDir() {
 		// file was requested
 		if Conf.ThumbEnable && form.Thumb && thumb.FormatSupported(filepath.Ext(fi.Name())) {
+			p := filepath.Join(Conf.Root, g.URL.Path)
 			thumbPath := cache.Get(p, thumbWidth, thumbHeight)
 			// serve original image if we can't thumbnail
 			if thumbPath != "" {
@@ -383,24 +382,22 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 }
 
 func readdirnames(root string) ([]*zip.FileHeader, error) {
-	f, err := os.Open(root)
+	f, err := http.Dir(Conf.Root).Open(root)
 	if err != nil {
 		return nil, err
 	}
 
-	names, err := f.Readdirnames(0)
+	names, err := f.Readdir(0)
 	if err != nil {
 		return nil, err
 	}
 
-	fhs := make([]*zip.FileHeader, 0, len(names))
-	base := filepath.Base(root)
-	for _, name := range names {
-		path := filepath.Join(root, name)
-		fi, err := os.Stat(path)
-		if err != nil {
-			return nil, err
-		}
+	var (
+		fhs  = make([]*zip.FileHeader, 0, len(names))
+		base = filepath.Base(root)
+	)
+
+	for _, fi := range names {
 		if !fi.Mode().IsRegular() {
 			continue
 		}
@@ -408,7 +405,8 @@ func readdirnames(root string) ([]*zip.FileHeader, error) {
 		if err != nil {
 			return nil, err
 		}
-		fh.Name = filepath.Join(base, name)
+		name := filepath.Base(fi.Name())
+		fh.Name = strings.TrimPrefix(filepath.Join(base, name), string([]rune{filepath.Separator}))
 		fhs = append(fhs, fh)
 	}
 
