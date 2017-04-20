@@ -106,7 +106,9 @@ func main() {
 	}
 	go cache.Serve()
 
-	gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
+	if Conf.ZipFolderMaxConcurrency > 0 {
+		gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
+	}
 
 	r.Get("{path}", getIndex)
 	log.Fatal(r.Ignition())
@@ -445,8 +447,10 @@ type zipper struct {
 }
 
 func (z *zipper) Output(code int, g *gas.Gas) {
-	gate.Start()
-	defer gate.Done()
+	if gate != nil {
+		gate.Start()
+		defer gate.Done()
+	}
 
 	dir := filepath.Dir(z.dir)
 
