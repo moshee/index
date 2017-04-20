@@ -56,7 +56,7 @@
   {{ len .Entries }} file{{ if len .Entries | ne 1 }}s{{ end }}
   {{- if $.Data.Config.ZipFolderEnable }}
     | <a href="?zip=1">Download as zip</a>
-    {{- if $.Data.Config.ZipFolderEnableRecursive -}}
+    {{ if $.Data.Config.ZipFolderEnableRecursive -}}
     (<a href="?zip=1&rec=1">recursively</a>)
     {{- end -}}
   {{- end }}
