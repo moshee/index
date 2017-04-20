@@ -69,7 +69,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var fs vfs.FileSystem
+	var (
+		r  = gas.New()
+		fs vfs.FileSystem
+	)
 
 	if Conf.ResourceDir != "" {
 		log.Print("using disk filesystem")
@@ -78,9 +81,11 @@ func main() {
 			log.Fatal(err)
 		}
 		fs = vfs.Fallback(nfs, bindata.Root)
+		r.StaticHandler("/static", fs)
 	} else {
 		log.Print("using binary filesystem")
 		fs = bindata.Root
+		r.StaticHandler("/static", vfs.Subdir(fs, "static"))
 	}
 
 	out.TemplateFS(fs)
@@ -103,8 +108,6 @@ func main() {
 
 	gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
 
-	r := gas.New()
-	r.StaticHandler("/static", fs)
 	r.Get("{path}", getIndex)
 	log.Fatal(r.Ignition())
 }
