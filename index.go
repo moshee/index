@@ -96,16 +96,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if Conf.ThumbDir == "" {
-		Conf.ThumbDir = filepath.Join(u.HomeDir, ".thumbs")
-	}
+	if Conf.ThumbEnable {
+		if Conf.ThumbDir == "" {
+			Conf.ThumbDir = filepath.Join(u.HomeDir, ".thumbs")
+		}
 
-	enc := thumb.JPEGEncoder{&jpeg.Options{90}}
-	cache, err = thumb.NewCache(Conf.ThumbDir, enc, FSStore{}, draw.ApproxBiLinear)
-	if err != nil {
-		log.Fatal(err)
+		enc := thumb.JPEGEncoder{&jpeg.Options{90}}
+		cache, err = thumb.NewCache(Conf.ThumbDir, enc, FSStore{}, draw.ApproxBiLinear)
+		if err != nil {
+			log.Fatal(err)
+		}
+		go cache.Serve()
 	}
-	go cache.Serve()
 
 	if Conf.ZipFolderMaxConcurrency > 0 {
 		gate = syncutil.NewGate(Conf.ZipFolderMaxConcurrency)
