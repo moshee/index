@@ -41,13 +41,14 @@ const (
 var Conf struct {
 	Root                     string `default:"."`
 	ThumbDir                 string
-	ThumbEnable              bool   `default:"true"`
-	GalleryImages            int    `default:"25"`
-	ZipFolderEnable          bool   `default:"false"` // enable download directory as zip
-	ZipFolderEnableRecursive bool   `default:"false"` // enable download directory recursively as zip
-	ZipFolderMaxConcurrency  int    `default:"0"`     // absolutely limit global number of concurrent zippers
-	FileListShowModes        bool   `default:"true"`  // show file modes (i.e. drwxrwxrwx)
-	ResourceDir              string // location of static assets on disk
+	ThumbEnable              bool          `default:"true"`
+	GalleryImages            int           `default:"25"`
+	ZipFolderEnable          bool          `default:"false"` // enable download directory as zip
+	ZipFolderEnableRecursive bool          `default:"false"` // enable download directory recursively as zip
+	ZipFolderMaxConcurrency  int           `default:"0"`     // absolutely limit global number of concurrent zippers
+	FileListShowModes        bool          `default:"true"`  // show file modes (i.e. drwxrwxrwx)
+	ResourceDir              string        // location of static assets on disk
+	IdleTimeout              time.Duration `default:"120m"` // idle connection timeout
 }
 
 var (
@@ -56,20 +57,20 @@ var (
 )
 
 func init() {
-	t, ok := http.DefaultTransport.(*http.Transport)
-	if !ok {
-		log.Fatal("not ok")
-	}
-	t.DialContext = (&net.Dialer{Timeout: 60 * time.Second}).DialContext
-	t.IdleConnTimeout = 30 * time.Minute
-}
-
-func main() {
 	err := gas.EnvConf(&Conf, "INDEX_")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	t, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		log.Fatal("not ok")
+	}
+	t.DialContext = (&net.Dialer{Timeout: 60 * time.Second}).DialContext
+	t.IdleConnTimeout = Conf.IdleTimeout
+}
+
+func main() {
 	var (
 		r  = gas.New()
 		fs vfs.FileSystem
