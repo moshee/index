@@ -198,7 +198,10 @@ func getIndex(g *gas.Gas) (int, gas.Outputter) {
 				return g.Stop()
 			}
 		}
+		log.Print(g.Request.Header.Get("Range"))
+		t := time.Now()
 		http.ServeContent(g, g.Request, fi.Name(), fi.ModTime(), f)
+		log.Printf("range %q took %v", g.Request.Header.Get("Range"), time.Since(t))
 		return g.Stop()
 	}
 
@@ -421,14 +424,15 @@ func readdirnames(root string) ([]*zip.FileHeader, error) {
 
 func walk(root string) ([]*zip.FileHeader, error) {
 	fhs := make([]*zip.FileHeader, 0)
+	root = filepath.Join(Conf.Root, root)
 	dir := filepath.Dir(root)
 
 	err := filepath.Walk(root, func(path string, fi os.FileInfo, err error) error {
-		if !fi.Mode().IsRegular() {
-			return nil
-		}
 		if err != nil {
 			return err
+		}
+		if !fi.Mode().IsRegular() {
+			return nil
 		}
 		fh, err := zip.FileInfoHeader(fi)
 		if err != nil {
